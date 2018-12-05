@@ -1,0 +1,61 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        applicationId "com.ryanhodgman.skybox"
+        minSdkVersion 24
+        targetSdkVersion 28
+        versionCode 1
+        versionName "0.1"
+
+        ndk {
+            abiFilters 'arm64-v8a', 'x86'
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix "-debug"
+            minifyEnabled false
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+
+ext {
+    kotlinx_version = '1.0.1'
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinx_version"
+
+    // AndroidX
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+
+    // Material Design
+    implementation "com.google.android.material:material:1.0.0"
+
+    // ARCore
+    implementation 'com.google.ar:core:1.5.0'
+
+    // Sceneform Core + Sceneform UX support
+    implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.5.1'
+}
+
+apply plugin: 'com.google.ar.sceneform.plugin'

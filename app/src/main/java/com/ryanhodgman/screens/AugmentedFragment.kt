@@ -11,20 +11,15 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import com.google.ar.sceneform.ux.ArFragment
 import com.ryanhodgman.R
-import com.ryanhodgman.ar.nodes.GamePieceNode
-import com.ryanhodgman.ar.setPlaneTappedListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 /**
  * @author Ryan Hodgman
  */
 class AugmentedFragment : ArFragment(), CoroutineScope {
-
-    private lateinit var gamePieceNode : GamePieceNode
 
     //region CoroutineScope
     private lateinit var job: Job
@@ -43,11 +38,6 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
         savedInstanceState: Bundle?
     ): View? {
         val sceneformFrame = super.onCreateView(inflater, container, savedInstanceState)!!
-        gamePieceNode = GamePieceNode(transformationSystem)
-        gamePieceNode.prepare(context!!)
-        setPlaneTappedListener { tapLocation ->
-            tapLocation.addChild(gamePieceNode)
-        }
         // Workaround for Sceneform issue - https://github.com/google-ar/sceneform-android-sdk/issues/179
         val handLayout = sceneformFrame.findViewById<FrameLayout>(R.id.sceneform_hand_layout)
         handLayout.removeAllViews()

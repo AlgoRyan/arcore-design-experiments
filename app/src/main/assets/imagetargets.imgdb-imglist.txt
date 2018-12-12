@@ -1,0 +1,1 @@
+earth.jpg|app/imagetargets/earth.jpg

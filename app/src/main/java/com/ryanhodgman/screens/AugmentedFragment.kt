@@ -9,11 +9,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.ux.ArFragment
 import com.ryanhodgman.R
+import com.ryanhodgman.ar.nodes.PointCloudNode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -27,17 +30,18 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
         get() = job + Dispatchers.Main
     //endregion
 
+    private val pointCloudNode = PointCloudNode()
+
     //region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         job = Job()
+        launch { pointCloudNode.prepare(context!!) }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val sceneformFrame = super.onCreateView(inflater, container, savedInstanceState)!!
+        arSceneView.scene.addChild(pointCloudNode)
         // Workaround for Sceneform issue - https://github.com/google-ar/sceneform-android-sdk/issues/179
         val handLayout = sceneformFrame.findViewById<FrameLayout>(R.id.sceneform_hand_layout)
         handLayout.removeAllViews()
@@ -59,6 +63,13 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
+    }
+    //endregion
+
+    //region BaseArFragment
+    override fun onUpdate(frameTime: FrameTime?) {
+        super.onUpdate(frameTime)
+        pointCloudNode.update(arSceneView.arFrame.acquirePointCloud())
     }
     //endregion
 }

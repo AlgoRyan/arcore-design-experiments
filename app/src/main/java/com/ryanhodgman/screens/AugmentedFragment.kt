@@ -12,7 +12,10 @@ import android.widget.ImageView
 import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.ux.ArFragment
 import com.ryanhodgman.R
+import com.ryanhodgman.ar.features
 import com.ryanhodgman.ar.nodes.PointCloudNode
+import com.ryanhodgman.ar.numFeatures
+import kotlinx.android.synthetic.main.layout_stabilisation_data.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,24 +43,11 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val sceneformFrame = super.onCreateView(inflater, container, savedInstanceState)!!
+        val rootView = super.onCreateView(inflater, container, savedInstanceState)!! as ViewGroup
         arSceneView.scene.addChild(pointCloudNode)
-        // Workaround for Sceneform issue - https://github.com/google-ar/sceneform-android-sdk/issues/179
-        val handLayout = sceneformFrame.findViewById<FrameLayout>(R.id.sceneform_hand_layout)
-        handLayout.removeAllViews()
-        inflater.inflate(R.layout.view_plane_discovery, handLayout, true)
-            .findViewById<ImageView>(R.id.img_plane_discovery).let { imageView ->
-                (imageView.drawable as AnimatedVectorDrawable).let { anim ->
-                    anim.registerAnimationCallback(object : Animatable2.AnimationCallback() {
-                        override fun onAnimationEnd(drawable: Drawable) {
-                            imageView.post { anim.start() }
-                        }
-                    })
-                    anim.start()
-                }
-                planeDiscoveryController.setInstructionView(imageView)
-            }
-        return sceneformFrame
+        setupCustomPlaneDetectionGuidance(inflater, rootView)
+        inflater.inflate(R.layout.layout_stabilisation_data, rootView, true)
+        return rootView
     }
 
     override fun onDestroy() {
@@ -69,7 +59,36 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
     //region BaseArFragment
     override fun onUpdate(frameTime: FrameTime?) {
         super.onUpdate(frameTime)
-        pointCloudNode.update(arSceneView.arFrame.acquirePointCloud())
+        val pointCloud = arSceneView.arFrame.acquirePointCloud()
+        pointCloudNode.update(pointCloud)
+        txt_num_points.text = "Number of feature points: ${pointCloud.numFeatures}"
+        val totalConfidence = pointCloud.features.fold(0f) { accum, element ->
+            accum + element.confidence
+        }
+        val avgConfidence = totalConfidence / pointCloud.numFeatures
+        txt_avg_confidence.text = "Average feature point confidence: $avgConfidence%"
+        // Surrender the point cloud's resources
+        pointCloud.release()
+    }
+    //endregion
+
+    //region Internal methods
+    private fun setupCustomPlaneDetectionGuidance(inflater: LayoutInflater, rootView: ViewGroup) {
+        // Workaround for Sceneform issue - https://github.com/google-ar/sceneform-android-sdk/issues/179
+        val handLayout = rootView.findViewById<FrameLayout>(R.id.sceneform_hand_layout)
+        handLayout.removeAllViews()
+        inflater.inflate(R.layout.view_plane_discovery, handLayout, true)
+                .findViewById<ImageView>(R.id.img_plane_discovery).let { imageView ->
+                    (imageView.drawable as AnimatedVectorDrawable).let { anim ->
+                        anim.registerAnimationCallback(object : Animatable2.AnimationCallback() {
+                            override fun onAnimationEnd(drawable: Drawable) {
+                                imageView.post { anim.start() }
+                            }
+                        })
+                        anim.start()
+                    }
+                    planeDiscoveryController.setInstructionView(imageView)
+                }
     }
     //endregion
 }

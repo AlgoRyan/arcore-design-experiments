@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <TextView
         android:id="@+id/txt_num_points"
@@ -18,5 +19,19 @@
         android:layout_height="wrap_content"
         android:textColor="@android:color/holo_red_dark"
         tools:text="Average feature point confidence: ##%"/>
+
+    <TextView
+        android:id="@+id/txt_time_plane_detection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/holo_red_dark"
+        android:text="Time of first plane detection: NA"/>
+
+    <Button
+        android:id="@+id/btn_start_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Start recording"/>
 
 </LinearLayout>

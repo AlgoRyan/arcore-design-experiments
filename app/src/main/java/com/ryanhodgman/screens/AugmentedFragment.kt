@@ -9,6 +9,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import com.google.ar.core.Frame
+import com.google.ar.core.Plane
+import com.google.ar.core.PointCloud
+import com.google.ar.core.TrackingState
 import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.ux.ArFragment
 import com.ryanhodgman.R
@@ -35,6 +39,9 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
 
     private val pointCloudNode = PointCloudNode()
 
+    private var timeRecordingStartedMs = 0L
+    private var timePlaneDetectedMs = 0L
+
     //region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,9 +52,18 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = super.onCreateView(inflater, container, savedInstanceState)!! as ViewGroup
         arSceneView.scene.addChild(pointCloudNode)
-        setupCustomPlaneDetectionGuidance(inflater, rootView)
+        // TODO: Disabled for data collection. Re-enable for animation research
+        // setupCustomPlaneDetectionGuidance(inflater, rootView)
         inflater.inflate(R.layout.layout_stabilisation_data, rootView, true)
         return rootView
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        btn_start_record.setOnClickListener {
+            btn_start_record.visibility = View.INVISIBLE
+            timeRecordingStartedMs = System.currentTimeMillis()
+        }
     }
 
     override fun onDestroy() {
@@ -59,7 +75,13 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
     //region BaseArFragment
     override fun onUpdate(frameTime: FrameTime?) {
         super.onUpdate(frameTime)
-        val pointCloud = arSceneView.arFrame.acquirePointCloud()
+        updatePointCloudData(arSceneView.arFrame.acquirePointCloud())
+        arSceneView.arFrame?.let { updateFrameData(it) }
+    }
+    //endregion
+
+    //region Internal methods
+    private fun updatePointCloudData(pointCloud: PointCloud) {
         pointCloudNode.update(pointCloud)
         txt_num_points.text = "Number of feature points: ${pointCloud.numFeatures}"
         val totalConfidence = pointCloud.features.fold(0f) { accum, element ->
@@ -70,9 +92,16 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
         // Surrender the point cloud's resources
         pointCloud.release()
     }
-    //endregion
 
-    //region Internal methods
+    private fun updateFrameData(frame: Frame) {
+        if (timePlaneDetectedMs != 0L) return
+        val trackedPlanes = frame.getUpdatedTrackables(Plane::class.java)
+        if (trackedPlanes.any { it.trackingState == TrackingState.TRACKING }) {
+            timePlaneDetectedMs = System.currentTimeMillis()
+            txt_time_plane_detection.text = "Time of first plane detection: ${timePlaneDetectedMs - timeRecordingStartedMs}ms"
+        }
+    }
+
     private fun setupCustomPlaneDetectionGuidance(inflater: LayoutInflater, rootView: ViewGroup) {
         // Workaround for Sceneform issue - https://github.com/google-ar/sceneform-android-sdk/issues/179
         val handLayout = rootView.findViewById<FrameLayout>(R.id.sceneform_hand_layout)

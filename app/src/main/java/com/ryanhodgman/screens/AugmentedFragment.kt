@@ -61,8 +61,13 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         btn_start_record.setOnClickListener {
-            btn_start_record.visibility = View.INVISIBLE
+            btn_start_record.visibility = View.GONE
             timeRecordingStartedMs = System.currentTimeMillis()
+            btn_reset.visibility = View.VISIBLE
+        }
+        btn_reset.setOnClickListener {
+            startActivity(AugmentedActivity.newIntent(context!!))
+            activity!!.finish()
         }
     }
 

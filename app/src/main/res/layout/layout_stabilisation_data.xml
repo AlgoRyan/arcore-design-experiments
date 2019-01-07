@@ -24,8 +24,8 @@
         android:id="@+id/txt_time_plane_detection"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@android:color/holo_red_dark"
-        android:text="Time of first plane detection: NA"/>
+        android:text="Time of first plane detection: NA"
+        android:textColor="@android:color/holo_red_dark"/>
 
     <Button
         android:id="@+id/btn_start_record"
@@ -33,5 +33,13 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Start recording"/>
+
+    <Button
+        android:id="@+id/btn_reset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Reset"
+        android:visibility="gone"/>
 
 </LinearLayout>

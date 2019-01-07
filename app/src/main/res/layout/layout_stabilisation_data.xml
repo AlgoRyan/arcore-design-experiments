@@ -27,6 +27,13 @@
         android:text="Time of first plane detection: NA"
         android:textColor="@android:color/holo_red_dark"/>
 
+    <TextView
+        android:id="@+id/txt_plane_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Size of detected plane: NA"
+        android:textColor="@android:color/holo_red_dark"/>
+
     <Button
         android:id="@+id/btn_start_record"
         android:layout_width="wrap_content"

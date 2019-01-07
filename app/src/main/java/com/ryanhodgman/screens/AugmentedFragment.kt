@@ -16,6 +16,7 @@ import com.google.ar.core.TrackingState
 import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.ux.ArFragment
 import com.ryanhodgman.R
+import com.ryanhodgman.ar.calcPolygonalArea
 import com.ryanhodgman.ar.features
 import com.ryanhodgman.ar.nodes.PointCloudNode
 import com.ryanhodgman.ar.numFeatures
@@ -39,8 +40,9 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
 
     private val pointCloudNode = PointCloudNode()
 
-    private var timeRecordingStartedMs = 0L
-    private var timePlaneDetectedMs = 0L
+    private var timeRecordingStartedMs = System.currentTimeMillis()
+    private var timePlaneDetectedMs = -1L
+    private var sizeLargestDetectedPlaneMetresSquared = 0.00
 
     //region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -99,11 +101,20 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
     }
 
     private fun updateFrameData(frame: Frame) {
-        if (timePlaneDetectedMs != 0L) return
         val trackedPlanes = frame.getUpdatedTrackables(Plane::class.java)
-        if (trackedPlanes.any { it.trackingState == TrackingState.TRACKING }) {
-            timePlaneDetectedMs = System.currentTimeMillis()
-            txt_time_plane_detection.text = "Time of first plane detection: ${timePlaneDetectedMs - timeRecordingStartedMs}ms"
+        trackedPlanes.forEach { plane ->
+            if (plane.trackingState == TrackingState.TRACKING) {
+                if (timePlaneDetectedMs == -1L) {
+                    timePlaneDetectedMs = System.currentTimeMillis()
+                    txt_time_plane_detection.text = "Time of first plane detection: ${timePlaneDetectedMs - timeRecordingStartedMs}ms"
+                }
+                plane.calcPolygonalArea().let { area ->
+                    if (area > sizeLargestDetectedPlaneMetresSquared) {
+                        sizeLargestDetectedPlaneMetresSquared = area
+                        txt_plane_size.text = "Size of detected plane: %.2fm^2".format(area)
+                    }
+                }
+            }
         }
     }
 

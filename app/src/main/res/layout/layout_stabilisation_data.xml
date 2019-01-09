@@ -35,18 +35,18 @@
         android:textColor="@android:color/holo_red_dark"/>
 
     <Button
-        android:id="@+id/btn_start_record"
+        android:id="@+id/btn_start_experiment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Start recording"/>
+        android:text="Start experiment"/>
 
     <Button
-        android:id="@+id/btn_reset"
+        android:id="@+id/btn_finish_experiment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Reset"
+        android:text="Finish experiment"
         android:visibility="gone"/>
 
 </LinearLayout>

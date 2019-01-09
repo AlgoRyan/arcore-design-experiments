@@ -1,34 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        package="com.ryanhodgman">
+<manifest package="com.ryanhodgman"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <uses-feature
-            android:name="android.hardware.camera.ar"
-            android:required="true" />
+        android:name="android.hardware.camera.ar"
+        android:required="true"/>
 
     <application
-            android:allowBackup="false"
-            android:icon="@drawable/ic_ar_glyph"
-            android:label="@string/app_name"
-            tools:ignore="GoogleAppIndexingWarning">
+        android:allowBackup="false"
+        android:icon="@drawable/ic_ar_glyph"
+        android:label="@string/app_name"
+        tools:ignore="GoogleAppIndexingWarning">
 
         <!-- Indicates that app requires ARCore ("AR Required"). Causes Google
              Play Store to download and install ARCore along with the app.
              For an "AR Optional" app, specify "optional" instead of "required". -->
         <meta-data
-                android:name="com.google.ar.core"
-                android:value="required" />
+            android:name="com.google.ar.core"
+            android:value="required"/>
 
         <activity
-                android:name="com.ryanhodgman.screens.AugmentedActivity"
-                android:screenOrientation="landscape"
-                android:theme="@style/AppTheme.FullScreen">
+            android:name="com.ryanhodgman.screens.AugmentedActivity"
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme.FullScreen">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 

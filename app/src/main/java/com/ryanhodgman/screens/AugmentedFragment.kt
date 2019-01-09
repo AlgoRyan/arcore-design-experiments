@@ -4,6 +4,7 @@ import android.graphics.drawable.Animatable2
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +18,7 @@ import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.ux.ArFragment
 import com.ryanhodgman.R
 import com.ryanhodgman.ar.calcPolygonalArea
+import com.ryanhodgman.ar.data.ExperimentDataRepository
 import com.ryanhodgman.ar.features
 import com.ryanhodgman.ar.nodes.PointCloudNode
 import com.ryanhodgman.ar.numFeatures
@@ -38,10 +40,17 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
         get() = job + Dispatchers.Main
     //endregion
 
+    private lateinit var experimentDataRepo: ExperimentDataRepository
+
     private val pointCloudNode = PointCloudNode()
 
-    private var timeRecordingStartedMs = System.currentTimeMillis()
+    private var experimentData = ExperimentDataRepository.ExperimentData()
+    private var updateHandler: Handler? = null
+
+    private var timeExperimentStartedMs = System.currentTimeMillis()
     private var timePlaneDetectedMs = -1L
+    private var numFeaturesTracked = 0
+    private var avgFeatureConfidence = 0f
     private var sizeLargestDetectedPlaneMetresSquared = 0.00
 
     //region Lifecycle
@@ -49,6 +58,7 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
         super.onCreate(savedInstanceState)
         job = Job()
         launch { pointCloudNode.prepare(context!!) }
+        experimentDataRepo = ExperimentDataRepository(context!!)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -62,12 +72,15 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        btn_start_record.setOnClickListener {
-            btn_start_record.visibility = View.GONE
-            timeRecordingStartedMs = System.currentTimeMillis()
-            btn_reset.visibility = View.VISIBLE
+        btn_start_experiment.setOnClickListener {
+            btn_start_experiment.visibility = View.GONE
+            timeExperimentStartedMs = System.currentTimeMillis()
+            btn_finish_experiment.visibility = View.VISIBLE
+            updateHandler = Handler()
+            appendCurrentRecord(experimentData)
         }
-        btn_reset.setOnClickListener {
+        btn_finish_experiment.setOnClickListener {
+            experimentDataRepo.storeExperimentData(experimentData)
             startActivity(AugmentedActivity.newIntent(context!!))
             activity!!.finish()
         }
@@ -76,6 +89,7 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
     override fun onDestroy() {
         super.onDestroy()
         job.cancel()
+        updateHandler = null
     }
     //endregion
 
@@ -88,14 +102,28 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
     //endregion
 
     //region Internal methods
+    private fun appendCurrentRecord(data: ExperimentDataRepository.ExperimentData) {
+        val timeSinceExperimentStarted = System.currentTimeMillis() - timeExperimentStartedMs
+        val record = ExperimentDataRepository.ExperimentData.Record(timeMs = timeSinceExperimentStarted,
+                numFeaturesTracked = numFeaturesTracked, avgFeatureConfidence = avgFeatureConfidence,
+                planeSizeMetres = sizeLargestDetectedPlaneMetresSquared)
+        data.addRecord(record)
+        updateHandler?.postDelayed({
+            appendCurrentRecord(data)
+        }, 100)
+    }
+
     private fun updatePointCloudData(pointCloud: PointCloud) {
         pointCloudNode.update(pointCloud)
-        txt_num_points.text = "Number of feature points: ${pointCloud.numFeatures}"
-        val totalConfidence = pointCloud.features.fold(0f) { accum, element ->
-            accum + element.confidence
-        }
-        val avgConfidence = totalConfidence / pointCloud.numFeatures
-        txt_avg_confidence.text = "Average feature point confidence: $avgConfidence%"
+        numFeaturesTracked = pointCloud.numFeatures
+        txt_num_points.text = "Number of feature points: $numFeaturesTracked"
+        avgFeatureConfidence = if (pointCloud.numFeatures > 0) {
+            val totalConfidence = pointCloud.features.fold(0f) { accum, element ->
+                accum + element.confidence
+            }
+            totalConfidence / pointCloud.numFeatures
+        } else 0f
+        txt_avg_confidence.text = "Average feature point confidence: $avgFeatureConfidence%"
         // Surrender the point cloud's resources
         pointCloud.release()
     }
@@ -106,7 +134,7 @@ class AugmentedFragment : ArFragment(), CoroutineScope {
             if (plane.trackingState == TrackingState.TRACKING) {
                 if (timePlaneDetectedMs == -1L) {
                     timePlaneDetectedMs = System.currentTimeMillis()
-                    txt_time_plane_detection.text = "Time of first plane detection: ${timePlaneDetectedMs - timeRecordingStartedMs}ms"
+                    txt_time_plane_detection.text = "Time of first plane detection: ${timePlaneDetectedMs - timeExperimentStartedMs}ms"
                 }
                 plane.calcPolygonalArea().let { area ->
                     if (area > sizeLargestDetectedPlaneMetresSquared) {
